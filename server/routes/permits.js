@@ -9,21 +9,26 @@ const { authMiddleware, requireSubscription } = require('../middleware/auth');
 const { parsePermitData } = require('../utils/permitParser');
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../uploads', req.user.id.toString());
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+// Choose storage based on environment: disk in server, memory in serverless
+const storage = isServerless
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: async (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads', req.user.id.toString());
+        try {
+          await fs.mkdir(uploadDir, { recursive: true });
+          cb(null, uploadDir);
+        } catch (error) {
+          cb(error);
+        }
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+      }
+    });
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /pdf/;
@@ -58,7 +63,7 @@ router.post('/upload', authMiddleware, requireSubscription, upload.single('permi
     }
 
     // Read PDF file
-    const dataBuffer = await fs.readFile(req.file.path);
+    const dataBuffer = isServerless ? req.file.buffer : await fs.readFile(req.file.path);
     const pdfData = await pdfParse(dataBuffer);
 
     // Parse permit data
@@ -85,7 +90,7 @@ router.post('/upload', authMiddleware, requireSubscription, upload.single('permi
         parsedData.permitNumber,
         state,
         parsedData.permitType,
-        req.file.path,
+        isServerless ? null : req.file.path,
         req.file.originalname,
         JSON.stringify(parsedData),
         parsedData.issuedDate,
@@ -160,7 +165,7 @@ router.post('/upload', authMiddleware, requireSubscription, upload.single('permi
     });
   } catch (error) {
     // Delete uploaded file if there's an error
-    if (req.file) {
+    if (req.file && !isServerless && req.file.path) {
       await fs.unlink(req.file.path).catch(console.error);
     }
     
@@ -303,7 +308,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 
     // Delete file
-    if (permit.rows[0].file_path) {
+    if (permit.rows[0].file_path && !isServerless) {
       await fs.unlink(permit.rows[0].file_path).catch(console.error);
     }
 
