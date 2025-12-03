@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FaTimes, FaSpinner } from 'react-icons/fa';
+// Using simple Unicode/icons to avoid React type conflicts in CI build
+// import { FaTimes, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 
 interface AuthModalProps {
@@ -70,9 +71,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
+            aria-label="Close"
+            className="text-gray-400 hover:text-gray-600 transition text-xl leading-none"
           >
-            <FaTimes className="text-xl" />
+            ×
           </button>
         </div>
 
@@ -180,7 +182,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ mode, onClose, onSwitchMode }) =>
           >
             {loading ? (
               <>
-                <FaSpinner className="animate-spin mr-2" />
+                <span className="inline-block animate-spin mr-2" aria-hidden>⏳</span>
                 {mode === 'login' ? 'Signing in...' : 'Creating account...'}
               </>
             ) : (

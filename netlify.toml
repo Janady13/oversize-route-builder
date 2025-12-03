@@ -1,6 +1,6 @@
 [build]
-  # Install root deps and client deps, then build the client
-  command = "npm ci && npm --prefix client ci && npm run build"
+  # Install root deps (no lockfile), client deps with lockfile, then build client
+  command = "npm install && npm --prefix client ci && npm run build"
   publish = "client/build"
   functions = "netlify/functions"
 
@@ -13,4 +13,3 @@
   from = "/api/*"
   to = "/.netlify/functions/server/api/:splat"
   status = 200
-
