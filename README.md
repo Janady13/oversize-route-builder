@@ -411,3 +411,7 @@ For support, email support@oversizeroutes.com or join our Slack channel.
 ---
 
 Built with ❤️ for the oversize transport industry
+
+## About
+
+Built by [ThatDeveloperGuy](https://thatdeveloperguy.com/) (THATDEVELOPERGUY LLC), a service-disabled veteran-owned web and AI engineering company in Cassville, Missouri. Founder: [Joseph W. Anady](https://feedthejoe.com/joseph/).
